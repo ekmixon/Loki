@@ -153,7 +153,6 @@ def removeNonAsciiDrop(string):
         nonascii = "".join(i for i in string if (ord(i) < 127 and ord(i) > 31) or ord(i) == 10 or ord(i) == 13)
     except Exception as e:
         traceback.print_exc()
-        pass
     return nonascii
 
 
@@ -193,7 +192,7 @@ def process_lines(lines, result_file, nocsv=False, dups=False, debug=False):
             if dups:
                 # Colorized head of each hash check
                 print_highlighted("\nHASH: {0} COMMENT: {1}".format(hashVal, comment))
-                print_highlighted("RESULT: %s (from cache)" % cache[hashVal])
+                print_highlighted(f"RESULT: {cache[hashVal]} (from cache)")
             continue
         else:
             # Colorized head of each hash check
@@ -210,8 +209,6 @@ def process_lines(lines, result_file, nocsv=False, dups=False, debug=False):
                 if debug:
                     traceback.print_exc()
                     # print "Error requesting VT results"
-                pass
-
         # Process results
         result = "- / -"
         virus = "-"
@@ -247,16 +244,13 @@ def process_lines(lines, result_file, nocsv=False, dups=False, debug=False):
             virus_names = []
             vendor_results = []
             for vendor in VENDORS:
-                if vendor in scans:
-                    if scans[vendor]["result"]:
-                        virus_names.append("{0}: {1}".format(vendor, scans[vendor]["result"]))
-                        vendor_results.append(scans[vendor]["result"])
-                    else:
-                        vendor_results.append("-")
+                if vendor in scans and scans[vendor]["result"]:
+                    virus_names.append("{0}: {1}".format(vendor, scans[vendor]["result"]))
+                    vendor_results.append(scans[vendor]["result"])
                 else:
                     vendor_results.append("-")
             vendor_result_string = ";".join(vendor_results)
-            if len(virus_names) > 0:
+            if virus_names:
                 virus = " / ".join(virus_names)
             # Type
             rating = "clean"
@@ -286,7 +280,7 @@ def process_lines(lines, result_file, nocsv=False, dups=False, debug=False):
                 else:
                     imphashes[imphash] = 1
             # Result
-            result = "%s / %s" % (response_dict.get("positives"), response_dict.get("total"))
+            result = f'{response_dict.get("positives")} / {response_dict.get("total")}'
             print_highlighted("VIRUS: {0}".format(virus))
             print_highlighted("FILENAMES: {0}".format(filenames))
             print_highlighted("FILE_TYPE: {2} FIRST_SUBMITTED: {0} LAST_SUBMITTED: {1}".format(
@@ -305,8 +299,11 @@ def process_lines(lines, result_file, nocsv=False, dups=False, debug=False):
                 mssoft = "MS_SOFTWARE_CATALOGUE"
 
         # Print the highlighted result line
-        print_highlighted("RESULT: %s %s%s%s%s%s" % (result, harmless, signed, revoked, expired, mssoft),
-                          hl_color=res_color)
+        print_highlighted(
+            f"RESULT: {result} {harmless}{signed}{revoked}{expired}{mssoft}",
+            hl_color=res_color,
+        )
+
 
         # Add to log file
         if not nocsv:
@@ -346,9 +343,9 @@ if __name__ == '__main__':
     print("  | |/ / / /   / /__/ _ \/ -_) __/  '_/ -_) __/ ".ljust(80))
     print("  |___/ /_/    \___/_//_/\\__/\__/_/\_\\__/_/    ".ljust(80))
     print("                                               ".ljust(80))
-    print(("  " + __AUTHOR__ + " - " + __VERSION__ + "").ljust(80))
+    print(f"  {__AUTHOR__} - {__VERSION__}".ljust(80))
     print(" ".ljust(80) + Style.RESET_ALL)
-    print(Style.RESET_ALL + " ")
+    print(f"{Style.RESET_ALL} ")
 
     parser = argparse.ArgumentParser(description='Virustotal Online Checker')
     parser.add_argument('-f', help='File to process (hash line by line OR csv with hash in each line - auto-detects '

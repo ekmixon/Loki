@@ -12,7 +12,6 @@ class VulnChecker():
     def __init__(self, logger):
         # Logger
         self.logger = logger
-        pass
 
     def run(self):
         self.logger.log("INFO", "VulnChecker", "Starting vulnerability checks ...")

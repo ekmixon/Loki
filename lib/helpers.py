@@ -28,11 +28,7 @@ import signal
 
 def is_ip(string):
     try:
-        if netaddr.valid_ipv4(string):
-            return True
-        if netaddr.valid_ipv6(string):
-            return True
-        return False
+        return True if netaddr.valid_ipv4(string) else bool(netaddr.valid_ipv6(string))
     except:
         traceback.print_exc()
         return False
@@ -40,9 +36,7 @@ def is_ip(string):
 
 def is_cidr(string):
     try:
-        if netaddr.IPNetwork(string) and "/" in string:
-            return True
-        return False
+        return bool(netaddr.IPNetwork(string) and "/" in string)
     except:
         return False
 
@@ -50,9 +44,7 @@ def is_cidr(string):
 def ip_in_net(ip, network):
     try:
         # print "Checking if ip %s is in network %s" % (ip, network)
-        if netaddr.IPAddress(ip) in netaddr.IPNetwork(network):
-            return True
-        return False
+        return netaddr.IPAddress(ip) in netaddr.IPNetwork(network)
     except:
         return False
 
@@ -74,7 +66,8 @@ def generateHashes(filedata):
 def getPlatformFull():
     type_info = ""
     try:
-        type_info = "%s PROC: %s ARCH: %s" % ( " ".join(platform.win32_ver()), platform.processor(), " ".join(platform.architecture()))
+        type_info = f'{" ".join(platform.win32_ver())} PROC: {platform.processor()} ARCH: {" ".join(platform.architecture())}'
+
     except Exception as e:
         type_info = " ".join(platform.win32_ver())
     return type_info
@@ -84,7 +77,12 @@ def setNice(logger):
     try:
         pid = os.getpid()
         p = psutil.Process(pid)
-        logger.log("INFO", "Init", "Setting LOKI process with PID: %s to priority IDLE" % pid)
+        logger.log(
+            "INFO",
+            "Init",
+            f"Setting LOKI process with PID: {pid} to priority IDLE",
+        )
+
         p.nice(psutil.IDLE_PRIORITY_CLASS)
         return 1
     except Exception as e:
@@ -100,9 +98,8 @@ def getExcludedMountpoints():
         mtab = open("/etc/mtab", "r")
         for mpoint in mtab:
             options = mpoint.split(" ")
-            if not options[0].startswith("/dev/"):
-                if not options[1] == "/":
-                    excludes.append(options[1])
+            if not options[0].startswith("/dev/") and options[1] != "/":
+                excludes.append(options[1])
     except Exception as e:
         print ("Error while reading /etc/mtab")
     finally:
@@ -139,17 +136,13 @@ def replaceEnvVars(path):
     # Setting new path to old path for default
     new_path = path
 
-    # ENV VARS ----------------------------------------------------------------
-    # Now check if an environment env is included in the path string
-    res = re.search(r"([@]?%[A-Za-z_]+%)", path)
-    if res:
-        env_var_full = res.group(1)
+    if res := re.search(r"([@]?%[A-Za-z_]+%)", path):
+        env_var_full = res[1]
         env_var = env_var_full.replace("%", "").replace("@", "")
 
         # Check environment variables if there is a matching var
-        if env_var in os.environ:
-            if os.environ[env_var]:
-                new_path = path.replace(env_var_full, re.escape(os.environ[env_var]))
+        if env_var in os.environ and os.environ[env_var]:
+            new_path = path.replace(env_var_full, re.escape(os.environ[env_var]))
 
     # TYPICAL REPLACEMENTS ----------------------------------------------------
     if path[:11].lower() == "\\systemroot":
@@ -169,7 +162,7 @@ def get_file_type(filePath, filetype_sigs, max_filetype_magics, logger):
         res_full = open(filePath, 'rb', os.O_RDONLY).read(max_filetype_magics)
         # Checking sigs
         for sig in filetype_sigs:
-            bytes_to_read = int(len(str(sig)) / 2)
+            bytes_to_read = len(str(sig)) // 2
             res = res_full[:bytes_to_read]
             if res == bytes.fromhex(sig):
                 return filetype_sigs[sig]
@@ -192,8 +185,6 @@ def removeNonAscii(s, stripit=False):
             nonascii = s.hex()
     except Exception as e:
         traceback.print_exc()
-        pass
-
     return nonascii
 
 
@@ -205,7 +196,6 @@ def removeNonAsciiDrop(s):
         nonascii = filter(lambda x: x in printable, s)
     except Exception as e:
         traceback.print_exc()
-        pass
     return nonascii
 
 
@@ -231,7 +221,8 @@ def getAgeString(filePath):
     ( ctime, mtime, atime ) = getAge(filePath)
     timestring = ""
     try:
-        timestring = "CREATED: %s MODIFIED: %s ACCESSED: %s" % ( time.ctime(ctime), time.ctime(mtime), time.ctime(atime) )
+        timestring = f"CREATED: {time.ctime(ctime)} MODIFIED: {time.ctime(mtime)} ACCESSED: {time.ctime(atime)}"
+
     except Exception as e:
         timestring = "CREATED: not_available MODIFIED: not_available ACCESSED: not_available"
     return timestring
@@ -280,7 +271,7 @@ def getHostname(os_platform):
     :return:
     """
     # Computername
-    if os_platform == "linux" or os_platform == "macos":
+    if os_platform in ["linux", "macos"]:
         return os.uname()[1]
     else:
         return os.environ['COMPUTERNAME']

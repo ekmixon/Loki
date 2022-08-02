@@ -23,6 +23,7 @@ Florian Roth
 DISCLAIMER - USE AT YOUR OWN RISK.
 """
 
+
 import sys
 import os
 import argparse
@@ -51,10 +52,10 @@ from lib.vuln_checker import VulnChecker
 # Platform
 os_platform = ""
 
-if _platform == "linux" or _platform == "linux2":
-    os_platform = "linux"
-elif _platform == "darwin":
+if _platform == "darwin":
     os_platform = "macos"
+elif _platform in ["linux", "linux2"]:
+    os_platform = "linux"
 elif _platform == "win32":
     os_platform = "windows"
 
@@ -69,7 +70,7 @@ if os_platform == "windows":
         print("Linux System - deactivating process memory check ...")
         os_platform = "linux"  # crazy guess
 
-if os_platform == "":
+if not os_platform:
     print("Unable to determine platform - LOKI is lost.")
     sys.exit(1)
 
@@ -167,11 +168,21 @@ class Loki(object):
         # Read IOCs -------------------------------------------------------
         # File Name IOCs (all files in iocs that contain 'filename')
         self.initialize_filename_iocs(self.ioc_path)
-        logger.log("INFO", "Init", "File Name Characteristics initialized with %s regex patterns" % len(self.filename_iocs))
+        logger.log(
+            "INFO",
+            "Init",
+            f"File Name Characteristics initialized with {len(self.filename_iocs)} regex patterns",
+        )
+
 
         # C2 based IOCs (all files in iocs that contain 'c2')
         self.initialize_c2_iocs(self.ioc_path)
-        logger.log("INFO", "Init", "C2 server indicators initialized with %s elements" % len(self.c2_server.keys()))
+        logger.log(
+            "INFO",
+            "Init",
+            f"C2 server indicators initialized with {len(self.c2_server.keys())} elements",
+        )
+
 
         # Hash based IOCs (all files in iocs that contain 'hash')
         self.initialize_hash_iocs(self.ioc_path)

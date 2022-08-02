@@ -93,7 +93,7 @@ class DoublePulsar(object):
         # Extract user ID from session setup response
         user_id = session_setup_response[32:34]
         if self.verbose:
-            print("User ID = %s" % struct.unpack("<H", user_id)[0])
+            print(f'User ID = {struct.unpack("<H", user_id)[0]}')
 
         # Replace user ID in tree connect request packet
         modified_tree_connect_request = list(self.tree_connect_request)
@@ -110,7 +110,7 @@ class DoublePulsar(object):
         # Extract tree ID from response
         tree_id = tree_connect_response[28:30]
         if self.verbose:
-            print("Tree ID = %s" % struct.unpack("<H", tree_id)[0])
+            print(f'Tree ID = {struct.unpack("<H", tree_id)[0]}')
 
         # Replace tree ID and user ID in trans2 session setup packet
         modified_trans2_session_setup = list(self.trans2_session_setup)
@@ -128,14 +128,12 @@ class DoublePulsar(object):
 
         s.close()
 
-        # Check for 0x51 response to indicate DOUBLEPULSAR infection
-        if final_response[34] == "\x51":
-            signature = final_response[18:26]
-            signature_long = struct.unpack('<Q', signature)[0]
-            key = calculate_doublepulsar_xor_key(signature_long)
-            return True, "DoublePulsar SMB implant detected XOR KEY: %s " % hex(key)
-        else:
+        if final_response[34] != "\x51":
             return False, "No presence of DOUBLEPULSAR SMB implant"
+        signature = final_response[18:26]
+        signature_long = struct.unpack('<Q', signature)[0]
+        key = calculate_doublepulsar_xor_key(signature_long)
+        return True, f"DoublePulsar SMB implant detected XOR KEY: {hex(key)} "
 
     def check_ip_rdp(self):
 
@@ -204,12 +202,16 @@ class DoublePulsar(object):
         try:
             ping_response = s.recv(1024)
 
-            if len(ping_response) == 288:
-                return True, "DoublePulsar SMB implant detected"
-            else:
-                return False, "Status Unknown - Response received but length was %d not 288" % (len(ping_response))
+            return (
+                (True, "DoublePulsar SMB implant detected")
+                if len(ping_response) == 288
+                else (
+                    False,
+                    "Status Unknown - Response received but length was %d not 288"
+                    % (len(ping_response)),
+                )
+            )
 
-            s.close()
         except socket.error as e:
             return False, "No presence of DOUBLEPULSAR RDP implant"
 

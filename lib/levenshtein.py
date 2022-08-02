@@ -18,10 +18,14 @@ class LevCheck():
         :param fileName:
         :return:
         """
-        for checkFile in CHECK_FILES:
-            if levenshtein(checkFile, fileName) == 1:
-                return checkFile
-        return None
+        return next(
+            (
+                checkFile
+                for checkFile in CHECK_FILES
+                if levenshtein(checkFile, fileName) == 1
+            ),
+            None,
+        )
 
 def levenshtein(s, t):
     if s == t: return 0

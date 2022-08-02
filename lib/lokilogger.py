@@ -73,7 +73,7 @@ class LokiLogger:
                 self.remote_logger.addHandler(remote_syslog_handler)
                 self.remote_logging = True
             except Exception as e:
-                print('Failed to create remote logger: ' + str(e))
+                print(f'Failed to create remote logger: {str(e)}')
                 sys.exit(1)
 
     def log(self, mes_type, module, message):
@@ -90,9 +90,8 @@ class LokiLogger:
             self.notices += 1
         self.messagecount += 1
 
-        if self.only_relevant:
-            if mes_type not in ('ALERT', 'WARNING'):
-                return
+        if self.only_relevant and mes_type not in ('ALERT', 'WARNING'):
+            return
 
         # to file
         if not self.no_log_file:
@@ -110,10 +109,11 @@ class LokiLogger:
             self.log_to_remotesys(message, mes_type, module)
 
     def Format(self, type, message, *args):
-        if not self.CustomFormatter:
-            return message.format(*args)
-        else:
-            return self.CustomFormatter(type, message, args)
+        return (
+            self.CustomFormatter(type, message, args)
+            if self.CustomFormatter
+            else message.format(*args)
+        )
 
     def log_to_stdout(self, message, mes_type):
 
@@ -128,23 +128,23 @@ class LokiLogger:
                 high_color = Fore.WHITE+Back.BLACK
 
                 if mes_type == "NOTICE":
-                    base_color = Fore.CYAN+''+Back.BLACK
-                    high_color = Fore.BLACK+''+Back.CYAN
+                    base_color = f'{Fore.CYAN}{Back.BLACK}'
+                    high_color = f'{Fore.BLACK}{Back.CYAN}'
                 elif mes_type == "INFO":
-                    base_color = Fore.GREEN+''+Back.BLACK
-                    high_color = Fore.BLACK+''+Back.GREEN
+                    base_color = f'{Fore.GREEN}{Back.BLACK}'
+                    high_color = f'{Fore.BLACK}{Back.GREEN}'
                 elif mes_type == "WARNING":
-                    base_color = Fore.YELLOW+''+Back.BLACK
-                    high_color = Fore.BLACK+''+Back.YELLOW
+                    base_color = f'{Fore.YELLOW}{Back.BLACK}'
+                    high_color = f'{Fore.BLACK}{Back.YELLOW}'
                 elif mes_type == "ALERT":
-                    base_color = Fore.RED+''+Back.BLACK
-                    high_color = Fore.BLACK+''+Back.RED
+                    base_color = f'{Fore.RED}{Back.BLACK}'
+                    high_color = f'{Fore.BLACK}{Back.RED}'
                 elif mes_type == "DEBUG":
-                    base_color = Fore.WHITE+''+Back.BLACK
-                    high_color = Fore.BLACK+''+Back.WHITE
+                    base_color = f'{Fore.WHITE}{Back.BLACK}'
+                    high_color = f'{Fore.BLACK}{Back.WHITE}'
                 elif mes_type == "ERROR":
-                    base_color = Fore.MAGENTA+''+Back.BLACK
-                    high_color = Fore.WHITE+''+Back.MAGENTA
+                    base_color = f'{Fore.MAGENTA}{Back.BLACK}'
+                    high_color = f'{Fore.WHITE}{Back.MAGENTA}'
                 elif mes_type == "RESULT":
                     if "clean" in message.lower():
                         high_color = Fore.BLACK+Back.GREEN
@@ -169,8 +169,8 @@ class LokiLogger:
                 # Print to console
                 if mes_type == "RESULT":
                     res_message = "\b\b%s %s" % (mes_type, message)
-                    print(base_color+' '+res_message+' '+Back.BLACK)
-                    print(Fore.WHITE+' '+Style.NORMAL)
+                    print(f'{base_color} {res_message} {Back.BLACK}')
+                    print(f'{Fore.WHITE} {Style.NORMAL}')
                 else:
                     sys.stdout.write("%s%s\b\b%s %s%s%s%s\n" % (reset_all, base_color, mes_type, message, Back.BLACK,Fore.WHITE,Style.NORMAL))
 
@@ -215,12 +215,12 @@ class LokiLogger:
             if self.debug:
                 traceback.print_exc()
                 sys.exit(1)
-            print("Error while logging to remote syslog server ERROR: %s" % str(e))
+            print(f"Error while logging to remote syslog server ERROR: {str(e)}")
 
     def print_welcome(self):
 
         if self.caller == 'main':
-            print(str(Back.WHITE))
+            print(Back.WHITE)
             print(" ".ljust(79) + Back.BLACK + Style.BRIGHT)
 
             print("      __   ____  __ ______  ")
@@ -230,13 +230,11 @@ class LokiLogger:
             print("   YARA and IOC Scanner     ")
             print("  ")
             print("   by Florian Roth, GNU General Public License")
-            print("   version %s (Python 3 release)" % __version__)
+            print(f"   version {__version__} (Python 3 release)")
             print("  ")
             print("   DISCLAIMER - USE AT YOUR OWN RISK")
-            print(str(Back.WHITE))
+            print(Back.WHITE)
             print(" ".ljust(79) + Back.BLACK + Fore.GREEN)
-            print(Fore.WHITE+''+Back.BLACK)
-
         else:
             print("  ")
             print(Back.GREEN + " ".ljust(79) + Back.BLACK + Fore.GREEN)
@@ -246,10 +244,10 @@ class LokiLogger:
 
             print("  ")
             print(Back.GREEN + " ".ljust(79) + Back.BLACK)
-            print(Fore.WHITE + '' + Back.BLACK)
+
+        print(f'{Fore.WHITE}{Back.BLACK}')
 
 
 def getSyslogTimestamp():
     date_obj = datetime.datetime.utcnow()
-    date_str = date_obj.strftime("%Y%m%dT%H:%M:%SZ")
-    return date_str
+    return date_obj.strftime("%Y%m%dT%H:%M:%SZ")

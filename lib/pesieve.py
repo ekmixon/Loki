@@ -59,7 +59,7 @@ class PESieve(object):
         (output, returnCode) = runProcess(command)
         # Debug output
         if self.logger.debug:
-            print("PE-Sieve JSON output: %s" % output)
+            print(f"PE-Sieve JSON output: {output}")
         if output == '' or not output:
             return results
         try:

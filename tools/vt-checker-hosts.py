@@ -45,7 +45,6 @@ def fetch_ip_and_domains(line):
     """
     Extracts IPs and Domains from a log line
     """
-    domains = []
     # Modify line to easily extract IPs and Domains from reports
     # get 183.200.23[.]213
     mod_line = line.replace("[", "").replace("]", "")
@@ -53,23 +52,18 @@ def fetch_ip_and_domains(line):
     ips = re.findall(ip_pattern, mod_line)
     domain_pattern = r'\b(?=.{4,253}$)(((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z0-9-]{3,40}\.[a-zA-Z]{2,63})\b'
     domains_raw = re.findall(domain_pattern, mod_line)
-    for domain in domains_raw:
-        domains.append(domain[0])
+    domains = [domain[0] for domain in domains_raw]
     return ips, domains
 
 
 def is_ip(value):
     ip_pattern = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b$'
-    if re.match(ip_pattern, value):
-        return True
-    return False
+    return bool(re.match(ip_pattern, value))
 
 
 def is_private(ip):
     ip = IP(ip)
-    if ip.iptype() == "PRIVATE":
-        return True
-    return False
+    return ip.iptype() == "PRIVATE"
 
 
 def is_resolvable(domain):
@@ -173,11 +167,8 @@ def process_lines(lines, debug=False):
             continue
 
         # Elements
-        for i in ips:
-            elements.append({"value": i, "type": "ip"})
-        for h in domains:
-            elements.append({"value": h, "type": "domain"})
-
+        elements.extend({"value": i, "type": "ip"} for i in ips)
+        elements.extend({"value": h, "type": "domain"} for h in domains)
     return elements
 
 
